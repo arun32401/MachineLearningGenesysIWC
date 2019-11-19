@@ -1,0 +1,23 @@
+{
+  "appId": "com.chatapp.app",
+  "appName": "Chat App",
+  "bundledWebRuntime": false,
+  "npmClient": "npm",
+  "webDir": "build",
+  "cordova": {},
+  "backgroundColor": "#ffffffff",
+  "android": {
+    "backgroundColor": "#ffffffff",
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": true
+  },
+  "ios": {
+    "backgroundColor": "#ffffffff",
+    "cordovaSwiftVersion": "3.0",
+    "minVersion": "11.3",
+    "cordovaLinkerFlags": [
+      "-ObjC"
+    ]
+  }
+}

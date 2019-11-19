@@ -1,0 +1,17 @@
+
+Articles
+
+With React
+https://www.smashingmagazine.com/2019/08/building-mobile-apps-ionic-react/
+https://itnext.io/building-an-ionic-application-using-react-61dc60c59e7b
+https://github.com/StevenConradEllis/react-ionic-medium-demo
+https://ionicframework.com/blog/announcing-ionic-react/
+https://dev.to/ionic/ionic-framework-app-using-react-firebase-hooks-5d7a
+https://news.extly.com/more-news/2022-joomla-developer/developer-news/19242-using-react-hooks-in-ionic-react.html?utm_content=joocialnews
+https://stackoverflow.com/questions/54330735/how-to-link-firebases-authentication-to-realtime-database
+
+
+With angular
+http://www.arjunsk.com/html5/how-to-setup-loginregister-using-ionic-cordova-part-5/
+https://www.djamware.com/post/5d2fe67f0707cc8442ebdf6a/build-androidios-mobile-apps-using-ionic-4-reactjs-capacitor
+https://www.djamware.com/post/586bb16680aca70c73934116/ionic-2-firebase-email-authentication-tutorial

@@ -2,7 +2,7 @@ import { IonInput, IonItem, IonLabel, IonContent, IonImg, IonPage, IonButton} fr
 // eslint-disable-next-line
 import React, { useState } from 'react';
 import { withRouter } from 'react-router-dom';
-import { isLoggedIn } from '../App';
+import { authFn } from '../App';
 
 import '../styles/utils.css';
 import '../styles/login.css';
@@ -27,6 +27,7 @@ const Login: React.FC<any> = (props) => {
 		if (isValid) {
 			firebase.auth().signInWithEmailAndPassword(email, password).then(data => {
 				if (data.user) {
+					authFn().setLoginState(true);
 					history.push({
 						pathname: '/chat',
 						state: {
@@ -74,7 +75,6 @@ const Login: React.FC<any> = (props) => {
 				<div className="logo">
 					<IonImg src={logo.src} alt={logo.alt} />
 				</div>
-				<p>{isLoggedIn} Log state</p>
 				<h1>Live Chat</h1>
 			</div>
 			<form className="login-form form" onSubmit={(e) => { e.preventDefault(); submit();}}>

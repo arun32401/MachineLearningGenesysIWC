@@ -2,6 +2,7 @@ import {IonHeader, IonToolbar, IonButtons, IonTitle, IonInput, IonItem, IonConte
 // eslint-disable-next-line
 import React, { useState, useEffect } from 'react';
 import { send } from 'ionicons/icons';
+import { authFn } from '../App';
 
 import '../styles/utils.css';
 import '../styles/login.css';
@@ -97,7 +98,7 @@ const Chat: React.FC<any> = (props) => {
     <IonPage>
 		<IonHeader>
 	        <IonToolbar color="primary">
-				<IonTitle>Live Chat</IonTitle>
+				<IonTitle>Live Chat { authFn().isLoggedIn ? 'logged in' : 'not logged'}</IonTitle>
 				<IonButtons slot="end">
 					<IonButton className="btn-capitalize" onClick={(e) => { signOut(e); }} type="button">Signout</IonButton>
 				</IonButtons>

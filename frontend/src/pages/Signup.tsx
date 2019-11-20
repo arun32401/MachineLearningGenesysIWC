@@ -1,9 +1,10 @@
 import { IonInput, IonItem, IonLabel, IonContent, IonImg, IonPage, IonButton, IonThumbnail} from '@ionic/react';
 // eslint-disable-next-line
 import React, { useState, useContext } from 'react';
-import { Plugins, CameraResultType, CameraSource } from '@capacitor/core';
+import { Plugins, CameraResultType, CameraSource, FilesystemDirectory, Capacitor } from '@capacitor/core';
 
 import { defineCustomElements } from '@ionic/pwa-elements/loader';
+import { authFn } from '../App';
 
 import '../styles/utils.css';
 import '../styles/login.css';
@@ -15,10 +16,10 @@ import "firebase/auth";
 const logo = { src: 'assets/img/talkup-200.png', alt: 'Logo'};
 
 const IS_AGE_DETECT = true;
-const FACE_DECTECTION_URL = 'https://silly-gecko-75.localtunnel.me/facerecognition';
+const FACE_DECTECTION_URL = 'http://10.31.56.124:5000/facerecognition';
 
 const Signup: React.FC<any> = (props) => {
-	const { Camera } = Plugins;
+	const { Camera, Filesystem } = Plugins;
 	const [ userName, setUserName ] = useState('');
 	const [ email, setEmail ] = useState('');
 	const [ isValid, setIsValid ] = useState(false);
@@ -123,6 +124,7 @@ const Signup: React.FC<any> = (props) => {
 	}
 
 	const validatePassword = (password, confirmPassword) => {
+		console.log('printing password', password, confirmPassword);
 		if (password !== "" && confirmPassword !== "" && (password === confirmPassword)) {
 			// Enable this when production
 			// let regexp = new RegExp(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,16}$/);
@@ -141,32 +143,30 @@ const Signup: React.FC<any> = (props) => {
 		const image = await Camera.getPhoto({
 			quality: 90,
 			allowEditing: false,
-			resultType: CameraResultType.Uri,
+			resultType: CameraResultType.Base64,
 			source: CameraSource.Camera
 		});
+		let blob = "data:image/jpeg;base64," + image.base64String
+		setPhoto(blob);
 
 		if (IS_AGE_DETECT) {
-			fetch(FACE_DECTECTION_URL, {
+			let faceDetectionRequest = await fetch(FACE_DECTECTION_URL, {
 				method: 'POST',
 				headers: {
 				    Accept: 'application/json',
 				    'Content-Type': 'application/json',
 					'Access-Control-Allow-Origin':'*',
 				},
-				body: JSON.stringify({ 'imageUrl' : image.webPath })
-			}).then((response) => {
-			    console.log('face recognition ---->', response);
-				// if (response) {
-				// 	setAgeGroup(response.age);
-				// 	setGender(response.gender)
-				// }
-			}).catch(error => {
-			    console.log('face recognition ---->', error);
+				body: JSON.stringify({ 'imageUrl': image.base64String })
 			});
+			let faceDetectionResponse = await faceDetectionRequest.json();
+			if (faceDetectionResponse) {
+				setAgeGroup(faceDetectionResponse.Age);
+				setGender(faceDetectionResponse.Gender);
+			}
 		}
-		setPhoto(image.webPath);
 	}
-	
+
 	defineCustomElements(window);
 
   return (
@@ -177,7 +177,7 @@ const Signup: React.FC<any> = (props) => {
 				<div className="logo">
 					<IonImg src={logo.src} alt={logo.alt} />
 				</div>
-				<h1>Live Chat</h1>                       
+				<h1>Live Chat</h1>
 			</div>
 			<form className="signup-form form" onSubmit={(e) => { e.preventDefault(); register();}}>
 				{(formErrors && formErrors.message !== "") ? (
@@ -198,29 +198,29 @@ const Signup: React.FC<any> = (props) => {
 				<div className="fieldset">
 					<IonItem>
 				      <IonLabel position="floating">Email</IonLabel>
-				      <IonInput name="email" type="email" value={email} required onInput={(e) => { setEmail((e.target as HTMLInputElement).value); validate(); }}></IonInput>
+				      <IonInput name="email" type="email" value={email} required onInput={(e) => { setEmail((e.target as HTMLInputElement).value); }}></IonInput>
 				    </IonItem>
 				</div>
 				<div className="fieldset">
 					<IonItem>
 				      <IonLabel position="floating">Username</IonLabel>
-				      <IonInput  name="userName" type="text" value={userName} required onInput={(e) => { setUserName((e.target as HTMLInputElement).value) ; validate(); } }></IonInput>
+				      <IonInput  name="userName" type="text" value={userName} required onInput={(e) => { setUserName((e.target as HTMLInputElement).value); } }></IonInput>
 				    </IonItem>
 				</div>
 				<div className="fieldset">
 					<IonItem>
 				      <IonLabel position="floating">Password</IonLabel>
-				      <IonInput required name="password" type="password" value={password} onInput={(e) => { setPassword((e.target as HTMLInputElement).value); validate(); } }></IonInput>
+				      <IonInput required name="password" type="password" value={password} onInput={(e) => { setPassword((e.target as HTMLInputElement).value); } }></IonInput>
 				    </IonItem>
 				</div>
 				<div className="fieldset">
 					<IonItem>
 				      <IonLabel position="floating">Confirm Password</IonLabel>
-				      <IonInput required name="password" type="password" value={confirmPassword} onInput={(e) => { setConfirmPassword((e.target as HTMLInputElement).value); validate(); }}></IonInput>
+				      <IonInput required name="password" type="password" value={confirmPassword} onInput={(e) => { setConfirmPassword((e.target as HTMLInputElement).value); }}></IonInput>
 				    </IonItem>
 				</div>
 				<div className="fieldset">
-					<IonButton disabled={isValid ? false : true} expand="block" type="submit">Signup</IonButton>
+					<IonButton expand="block" type="submit">Signup</IonButton>
 				</div>
 				
 				<div className="fieldset">

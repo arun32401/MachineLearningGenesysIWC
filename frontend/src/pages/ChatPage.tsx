@@ -2,7 +2,7 @@ import {IonHeader, IonToolbar, IonButtons, IonTitle, IonInput, IonItem, IonConte
 // eslint-disable-next-line
 import React, { useState, useEffect } from 'react';
 import { send } from 'ionicons/icons';
-import { authFn } from '../App';
+// import { authFn } from '../App';
 
 import '../styles/utils.css';
 import '../styles/login.css';
@@ -10,14 +10,14 @@ import '../styles/chat.css';
 
 import * as firebase from "firebase/app";
 import "firebase/auth";
+import "firebase/database";
 
 const logo = { src: 'assets/img/talkup-200.png', alt: 'Logo'};
 
-const INITIAL_STATE = {
+const INITIAL_STATE_OBJ = {
 	loggedIn: false,
 	user: null
 };
-
 
 const MessageUI: React.FC<any> = (props) => {
 	const colClassName = (props.type === 'agent') ? '' : 'chat-bubble-offset';
@@ -35,70 +35,97 @@ const MessageUI: React.FC<any> = (props) => {
 	)
 }
 
+const IS_BOT_ACTIVATE = true;
+
 const Chat: React.FC<any> = (props) => {
-	
+
 	const MESSAGES_INITIAL_STATE = [
 		{
 			type: 'agent',
-			message: 'Hi Customer'
-		},
-
-		{
-			type: 'customer',
-			message: 'Hi Agent'
+			message: 'Hi'
 		}
 	]
 
 	const [ message, setMessage ] = useState('');
-	const [ stateObj, setStateObj ] = useState(INITIAL_STATE);
-	const [ messages, setMessages ] = useState(MESSAGES_INITIAL_STATE);
+	const [ stateObj, setStateObj ] = useState(INITIAL_STATE_OBJ);
+	const [ messages, setMessages ] = useState([]);
+	const [ userId, setUserId ] = useState('');
+	const [ counterVal, setCounterVal ] = useState(0);
 
 	const submit = async () => {
 		try {
-		  // messageUI('customer', message);
-		  setMessages(oldArray => [...oldArray, {
-			  type: 'customer',
-			  message: message
-		  }]);
+			generateMessage('customer', message);
 		} catch (e) {
 
 		}
  	}
 
-	async function loadData() {
-		console.log('props------------', props);
-		if (props.location.state) {
-			console.log('firebase current user------------', firebase.auth().currentUser);
-			setStateObj({
-				loggedIn: true,
-				user: {
-					name: props.location.state.user.displayName,
-					email: props.location.state.user.email
-				}
-			});
-		}
+	const generateMessage = (type, message) => {
+		setMessages(oldArray => [...oldArray, {
+			type,
+			message
+		}]);
 	}
 
-	useEffect(() => {
-		loadData();
-	}, [])
+	const initChatBot = () => {
+		console.log('initChatBot before', stateObj);
+		if (IS_BOT_ACTIVATE && stateObj.user) {
+			generateMessage('agent', `Hi ${stateObj.user.userName}`);
+		}
+	};
 
 	const signOut = async (e) => {
 		const { history } = props;
 	    await firebase.auth().signOut().then(function(data) {
-		  console.log('data of signout', data)
-		  setStateObj(INITIAL_STATE);
+		  console.log('data of signout', data);
+		  setStateObj(INITIAL_STATE_OBJ);
+		  history.goBack();
 	  	}).catch((error) => {
 		  console.log('signout error', error);
 		});
-	    history.goBack();
 	}
+	
+	function loadData (props) {
+		const { history } = props;
+		try {
+			if (Object.keys(props.location.state.user.length)) {
+				let userObj = JSON.parse(props.location.state.user);
+				setUserId(userObj.uid);
+				firebase.database().ref('users/' + userObj.uid  + "/profile").once('value', (snap) => {
+					const currentUser = snap.val();
+					console.log('2', currentUser);
+					let stateObjToBeUpdate = {
+						loggedIn: true,
+						user: snap.val()
+					};
+					setStateObj(stateObjToBeUpdate);
+					return stateObjToBeUpdate;
+				});
+			}
+		} catch (e) {
+			console.log('error in loading data', e);
+		}
+		return stateObj;
+	}
+	
+	// HACK: counter is given to stop useEffect from loading everytime
+	useEffect(() => {
+		console.log('1');
+		if (counterVal < 2) {
+			loadData(props);
+			if (stateObj.user) {
+				initChatBot();
+			}
+			console.log('3', stateObj);
+			setCounterVal(counterVal + 1);
+		}
+	}, [stateObj]);
 
   return (
     <IonPage>
 		<IonHeader>
 	        <IonToolbar color="primary">
-				<IonTitle>Live Chat { authFn().isLoggedIn ? 'logged in' : 'not logged'}</IonTitle>
+				<IonTitle>Live Chat</IonTitle>
 				<IonButtons slot="end">
 					<IonButton className="btn-capitalize" onClick={(e) => { signOut(e); }} type="button">Signout</IonButton>
 				</IonButtons>

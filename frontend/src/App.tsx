@@ -32,18 +32,18 @@ import firebaseConfig from "./config/firebase";
 firebase.initializeApp(firebaseConfig);
 
 
-export const authFn = () => {
-	let isLoggedIn = false;
-
-	const setLoginState = (state) => {
-		isLoggedIn = state;
-	}
-
-	return {
-		isLoggedIn,
-		setLoginState
-	};
-}
+// export const authFn = () => {
+// 	let isLoggedIn = false;
+// 
+// 	const setLoginState = (state) => {
+// 		isLoggedIn = state;
+// 	}
+// 
+// 	return {
+// 		isLoggedIn,
+// 		setLoginState
+// 	};
+// }
 
 const App: React.FC<any> = (props) =>  {
 	return (

@@ -2,7 +2,7 @@ import { IonInput, IonItem, IonLabel, IonContent, IonImg, IonPage, IonButton} fr
 // eslint-disable-next-line
 import React, { useState } from 'react';
 import { withRouter } from 'react-router-dom';
-import { authFn } from '../App';
+// import { authFn } from '../App';
 
 import '../styles/utils.css';
 import '../styles/login.css';
@@ -14,8 +14,8 @@ const logo = { src: 'assets/img/talkup-200.png', alt: 'Logo'};
 
 const Login: React.FC<any> = (props) => {
 
-	const [ email, setEmail ] = useState('');
-	const [ password, setPassword ] = useState('');
+	const [ email, setEmail ] = useState('rekha.m@genesys.com');
+	const [ password, setPassword ] = useState('test123');
 	const [ isValid, setIsValid ] = useState(false);
 
 	const formErrorsInitState = {code: '', message: ''};
@@ -27,7 +27,7 @@ const Login: React.FC<any> = (props) => {
 		if (isValid) {
 			firebase.auth().signInWithEmailAndPassword(email, password).then(data => {
 				if (data.user) {
-					authFn().setLoginState(true);
+					console.log('data.user in login page', data.user);
 					history.push({
 						pathname: '/chat',
 						state: {
@@ -58,7 +58,7 @@ const Login: React.FC<any> = (props) => {
 	    let regexp = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
 	    return regexp.test(email.toLowerCase());
 	}
-	
+
 	const validateForm = () => {
 		if (validateEmail(email) && password.trim() !== '') {
 			setIsValid(true);

@@ -2,9 +2,9 @@ import { IonInput, IonItem, IonLabel, IonContent, IonImg, IonPage, IonButton, Io
 // eslint-disable-next-line
 import React, { useState, useContext } from 'react';
 import { Plugins, CameraResultType, CameraSource, FilesystemDirectory, Capacitor } from '@capacitor/core';
-
+import { withRouter } from 'react-router-dom';
 import { defineCustomElements } from '@ionic/pwa-elements/loader';
-import { authFn } from '../App';
+// import { authFn } from '../App';
 
 import '../styles/utils.css';
 import '../styles/login.css';
@@ -16,7 +16,7 @@ import "firebase/auth";
 const logo = { src: 'assets/img/talkup-200.png', alt: 'Logo'};
 
 const IS_AGE_DETECT = true;
-const FACE_DECTECTION_URL = 'http://10.31.56.124:5000/facerecognition';
+const FACE_DECTECTION_URL = 'http://de466b26.ngrok.io/facerecognition';
 
 const Signup: React.FC<any> = (props) => {
 	const { Camera, Filesystem } = Plugins;
@@ -80,9 +80,9 @@ const Signup: React.FC<any> = (props) => {
 		if (validate()) {
 			auth.createUserWithEmailAndPassword(email, password).then((data) => {
 				console.log('createUserWithEmailAndPassword', data);
-				 auth.currentUser.updateProfile({
-					 displayName: userName
-				 }).then(() => {
+				auth.currentUser.updateProfile({
+					displayName: userName
+				}).then(() => {
 					console.log('auth.currentUser.uid', auth.currentUser.uid, auth.currentUser);
 					firebase.database().ref('users/' + auth.currentUser.uid + "/profile").set({
 						 userName: userName,
@@ -94,9 +94,9 @@ const Signup: React.FC<any> = (props) => {
 					history.push({
 						pathname: '/chat',
 						state: {
-							user:  JSON.stringify(auth.currentUser)
+							user: JSON.stringify(auth.currentUser)
 						}
-					})
+					});
 				 }).catch((error) => {
 					 setFormErrors(error);
 				 });
@@ -143,8 +143,7 @@ const Signup: React.FC<any> = (props) => {
 		const image = await Camera.getPhoto({
 			quality: 90,
 			allowEditing: false,
-			resultType: CameraResultType.Base64,
-			source: CameraSource.Camera
+			resultType: CameraResultType.Base64
 		});
 		let blob = "data:image/jpeg;base64," + image.base64String
 		setPhoto(blob);
@@ -161,6 +160,7 @@ const Signup: React.FC<any> = (props) => {
 			});
 			let faceDetectionResponse = await faceDetectionRequest.json();
 			if (faceDetectionResponse) {
+				console.log('faceDetectionResponse--->', faceDetectionResponse);
 				setAgeGroup(faceDetectionResponse.Age);
 				setGender(faceDetectionResponse.Gender);
 			}
@@ -235,4 +235,4 @@ const Signup: React.FC<any> = (props) => {
   );
 };
 
-export default Signup;
+export default withRouter(Signup);

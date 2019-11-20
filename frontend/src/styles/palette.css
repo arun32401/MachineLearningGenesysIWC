@@ -1,0 +1,8 @@
+/* Set variables for all modes */
+:root {
+  /* Set the font family of the entire app */
+  --ion-font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Roboto", sans-serif;
+  
+  --ion-chat-customer: #0cd1e8;
+  --ion-color-step-550: #f4f5f8;
+}

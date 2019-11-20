@@ -1,12 +1,13 @@
-import {IonHeader, IonToolbar, IonButtons, IonTitle, IonInput, IonItem, IonContent, IonPage, IonButton, IonIcon, IonTextarea, IonGrid, IonRow, IonCol} from '@ionic/react';
+import {IonHeader, IonToolbar, IonButtons, IonList, IonTitle, IonInput, IonItem, IonContent, IonPage, IonButton, IonIcon, IonTextarea, IonGrid, IonRow, IonCol} from '@ionic/react';
 // eslint-disable-next-line
 import React, { useState, useEffect } from 'react';
-import { send } from 'ionicons/icons';
+import { send, person } from 'ionicons/icons';
 // import { authFn } from '../App';
 
 import '../styles/utils.css';
 import '../styles/login.css';
 import '../styles/chat.css';
+import '../styles/chat-dark.css';
 
 import * as firebase from "firebase/app";
 import "firebase/auth";
@@ -22,16 +23,18 @@ const INITIAL_STATE_OBJ = {
 const MessageUI: React.FC<any> = (props) => {
 	const colClassName = (props.type === 'agent') ? '' : 'chat-bubble-offset';
 	const offsetVal = (props.type === 'agent') ? '' : "6";
-	const bubbleClassName = (props.type === 'agent') ? 'chat-bubble--left' : 'chat-bubble--right';
-	
+	const bubbleClassName = (props.type === 'agent') ? `chat-bubble--left chat-bubble-key-${props.keyId}` : `chat-bubble--right chat-bubble-key-${props.keyId}`;
+
 	return (
-		<IonRow>
-			<IonCol size="6" className={colClassName} offset= {offsetVal} >
-				<div className="chat-bubble { bubbleClassName }">
-					{(props.message && props.message.trim()) !== '' ? props.message : 'Hello Dude'}
-				</div>
-			</IonCol>
-		</IonRow>
+		<IonItem lines="none">
+			<IonRow className="chat-bubble-row">
+				<IonCol size="6" className={colClassName} offset={offsetVal}>
+					<div className={`chat-bubble ${bubbleClassName}`}>
+						{(props.message && props.message.trim()) !== '' ? props.message : 'Hello Dude'}
+					</div>
+				</IonCol>
+			</IonRow>
+		</IonItem>
 	)
 }
 
@@ -51,12 +54,16 @@ const Chat: React.FC<any> = (props) => {
 	const [ messages, setMessages ] = useState([]);
 	const [ userId, setUserId ] = useState('');
 	const [ counterVal, setCounterVal ] = useState(0);
+	const [ accessibility, setAccessibilty ] = useState(false);
+	const [ showAccessibilityBtn, setShowAccessibilityBtn ] = useState(false);
 
 	const submit = async () => {
 		try {
 			generateMessage('customer', message);
+			evaluateMessage(message);
+			clearInput();
 		} catch (e) {
-
+			console.log('submit message error', e);
 		}
  	}
 
@@ -65,51 +72,126 @@ const Chat: React.FC<any> = (props) => {
 			type,
 			message
 		}]);
+		setTextAreaFocus();
+	}
+	
+	const evaluateMessage = (message) => {
+		switch (message.trim()) {
+			case 'Yes':
+				console.log('yes said');
+				setShowAccessibilityBtn(true);
+				toggleAccessibility();
+				generateMessage('agent', 'Accessibility Settings are turned on');
+				generateMessage('agent', 'You can navigate to the button at top right corner with user icon to toggle between accessibility settings');
+			default:
+				break;
+		}
+	}
+
+	const setTextAreaFocus = () => {
+		let element = document.querySelector("textarea[name='message']") as HTMLInputElement;
+		console.log('element', element);
+		if (element) {
+			element.focus();
+		}
+	}
+
+	const setTabIndexForMessages = () => {
+		let elements = document.querySelectorAll(".chat-bubble") as NodeListOf<HTMLElement>;
+		elements.forEach((item) => {
+			item.setAttribute('tabindex', '0');
+		})
+	}
+	
+	useEffect(() => {
+		setTabIndexForMessages();
+	}, [messages])
+
+	const toggleAccessibility = () => {
+		if (accessibility) {
+			setAccessibilty(false);
+			setDarkMode(false);
+		} else {
+			setAccessibilty(true);
+			setDarkMode(true);
+		}
+	}
+	
+	const forceAccessibility = (isSet) => {
+		if (isSet) {
+			setAccessibilty(true);
+			setDarkMode(true);
+		} else {
+			setAccessibilty(false);
+			setDarkMode(false);
+		}
+	}
+
+	const setDarkMode = (isEnable) => {
+		const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+		// Listen for changes to the prefers-color-scheme media query
+		prefersDark.addListener((mediaQuery) => toggleDarkTheme(mediaQuery.matches));
+
+		function toggleDarkTheme(shouldAdd) {
+		  document.body.classList.toggle('dark', shouldAdd);
+		}
+		if (isEnable) {
+			toggleDarkTheme(true);
+		} else {
+			toggleDarkTheme(false);
+		}
 	}
 
 	const initChatBot = () => {
 		console.log('initChatBot before', stateObj);
 		if (IS_BOT_ACTIVATE && stateObj.user) {
 			generateMessage('agent', `Hi ${stateObj.user.userName}`);
+
+			if (detectAgeGroup(stateObj.user.ageGroup) > 25) {
+				generateMessage('agent', 'We found that you might be need our accessibility feature based on your age group. Would you like to enable it?');
+			}
 		}
 	};
+
+	const detectAgeGroup = (ageGroup) => {
+		let [minAge, maxAge] = ageGroup.split("-");
+		return parseInt(maxAge);
+	}
 
 	const signOut = async (e) => {
 		const { history } = props;
 	    await firebase.auth().signOut().then(function(data) {
 		  console.log('data of signout', data);
 		  setStateObj(INITIAL_STATE_OBJ);
-		  history.goBack();
 	  	}).catch((error) => {
 		  console.log('signout error', error);
 		});
+		history.goBack();
+		forceAccessibility(false);
 	}
 	
 	function loadData (props) {
-		const { history } = props;
+		console.log('printing props', props.location.state);
 		try {
-			if (Object.keys(props.location.state.user.length)) {
+			if (props.location.state.userId !== '') {
 				let userObj = JSON.parse(props.location.state.user);
-				setUserId(userObj.uid);
-				firebase.database().ref('users/' + userObj.uid  + "/profile").once('value', (snap) => {
-					const currentUser = snap.val();
-					console.log('2', currentUser);
-					let stateObjToBeUpdate = {
-						loggedIn: true,
-						user: snap.val()
-					};
-					setStateObj(stateObjToBeUpdate);
-					return stateObjToBeUpdate;
-				});
+				let stateObjToBeUpdate = {
+					loggedIn: true,
+					user: userObj
+				};
+				stateObjToBeUpdate.user.userId = props.location.state.userId;
+				setStateObj(stateObjToBeUpdate);
+				console.log('2', stateObjToBeUpdate, stateObj)
 			}
 		} catch (e) {
 			console.log('error in loading data', e);
 		}
 		return stateObj;
 	}
-	
+
 	// HACK: counter is given to stop useEffect from loading everytime
 	useEffect(() => {
+		const { history } = props;
 		console.log('1');
 		if (counterVal < 2) {
 			loadData(props);
@@ -120,6 +202,10 @@ const Chat: React.FC<any> = (props) => {
 			setCounterVal(counterVal + 1);
 		}
 	}, [stateObj]);
+	
+	const clearInput = () => {
+		setMessage('');
+	}
 
   return (
     <IonPage>
@@ -127,23 +213,28 @@ const Chat: React.FC<any> = (props) => {
 	        <IonToolbar color="primary">
 				<IonTitle>Live Chat</IonTitle>
 				<IonButtons slot="end">
+					{showAccessibilityBtn ? (
+						<IonButton fill="clear" onClick={e => { toggleAccessibility(); }} type="button">
+					      <IonIcon slot="icon-only" icon={person} />
+					    </IonButton>
+					) : null }
 					<IonButton className="btn-capitalize" onClick={(e) => { signOut(e); }} type="button">Signout</IonButton>
 				</IonButtons>
 	        </IonToolbar>
 	   	</IonHeader>
-      <IonContent>
+      <IonContent className="chat-page">
 	  	<div className="chat-transcript">
-			<IonGrid className="chat-transcript-container">
+			<IonList aria-live="polite" className="chat-transcript-container">
 				{
 					messages.map((item, index) => {
-						return <MessageUI key={index} type={item.type} message={item.message}/>
+						return <MessageUI key={index} type={item.type} message={item.message} keyId={index}/>
 					})
 				}
-			</IonGrid>
+			</IonList>
 			<form className="chat-form form" onSubmit={(e) => { e.preventDefault(); submit();}}>
 				<div className="fieldset flexbox flexbox-v-center fieldset--message">
 					<IonItem className="message-box">
-				      <IonTextarea value={message}  name="message" onInput={(e) => setMessage((e.target as HTMLInputElement).value)} placeholder="Type your message here..."></IonTextarea>
+				      <IonTextarea autofocus value={message} name="message" onInput={(e) => setMessage((e.target as HTMLInputElement).value)} placeholder="Type your message here..."></IonTextarea>
 				    </IonItem>
 					<IonButton fill="clear" type="submit">
 				      <IonIcon slot="icon-only" icon={send} />

@@ -1,0 +1,73 @@
+function loadData (props) {
+	const { history } = props;
+	try {
+		if (Object.keys(props.location.state.user.length)) {
+			let userObj = JSON.parse(props.location.state.user);
+			setUserId(userObj.uid);
+			firebase.database().ref('users/' + userObj.uid  + "/profile").once('value', (snap) => {
+				const currentUser = snap.val();
+				console.log('2', currentUser);
+				let stateObjToBeUpdate = {
+					loggedIn: true,
+					user: snap.val()
+				};
+				setStateObj(stateObjToBeUpdate);
+				return stateObjToBeUpdate;
+			});
+		}
+	} catch (e) {
+		console.log('error in loading data', e);
+	}
+	return stateObj;
+}
+
+// HACK: counter is given to stop useEffect from loading everytime
+useEffect(() => {
+	console.log('1');
+	if (counterVal < 2) {
+		loadData(props);
+		if (stateObj.user) {
+			initChatBot();
+		}
+		console.log('3', stateObj);
+		setCounterVal(counterVal + 1);
+	}
+}, [stateObj]);
+
+
+
+@media (prefers-color-scheme: dark) {
+
+	:root {
+	/* Dark mode variables go here */
+		--bg-color: #121212;
+		--font-color: #332940;
+	}
+
+}
+
+/* Fallback for older browsers or manual mode */
+body.dark,
+body.dark .ion-page,
+body.dark .chat-page,
+body.dark .chat-transcript .chat-transcript-container,
+body.dark .chat-form,
+body.dark .chat-form .message-box {
+  /* Dark mode variables go here */
+   background: #121212;
+   color: #332940;
+}
+
+
+firebase.database().ref('users/' + userId  + "/profile").on('value', (snap) => {
+	const currentUser = snap.val();
+	console.log('printing currentUser', currentUser);
+	// authFn().setLoginState(true);
+	// setUserState(true, snap.val());
+	setStateObj({
+		loggedIn: true,
+		user: snap.val()
+	});
+	console.log('printing state object', stateObj);
+	initChatBot();
+})

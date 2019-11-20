@@ -15,7 +15,7 @@ import "firebase/auth";
 
 const logo = { src: 'assets/img/talkup-200.png', alt: 'Logo'};
 
-const IS_AGE_DETECT = true;
+const IS_AGE_DETECT = false;
 const FACE_DECTECTION_URL = 'http://de466b26.ngrok.io/facerecognition';
 
 const Signup: React.FC<any> = (props) => {
@@ -84,17 +84,19 @@ const Signup: React.FC<any> = (props) => {
 					displayName: userName
 				}).then(() => {
 					console.log('auth.currentUser.uid', auth.currentUser.uid, auth.currentUser);
-					firebase.database().ref('users/' + auth.currentUser.uid + "/profile").set({
+					let userObjToSet = {
 						 userName: userName,
 						 email: email,
 						 profilePic: photo,
 						 ageGroup: (ageGroup && ageGroup !== '') ? ageGroup : null,
 						 gender: (gender && gender !== '') ? gender : null,
-					});
+					};
+					firebase.database().ref('users/' + auth.currentUser.uid + "/profile").set(userObjToSet);
 					history.push({
 						pathname: '/chat',
 						state: {
-							user: JSON.stringify(auth.currentUser)
+							user:  JSON.stringify(userObjToSet),
+							userId: auth.currentUser.uid
 						}
 					});
 				 }).catch((error) => {

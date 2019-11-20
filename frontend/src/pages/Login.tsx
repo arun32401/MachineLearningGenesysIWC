@@ -28,12 +28,18 @@ const Login: React.FC<any> = (props) => {
 			firebase.auth().signInWithEmailAndPassword(email, password).then(data => {
 				if (data.user) {
 					console.log('data.user in login page', data.user);
-					history.push({
-						pathname: '/chat',
-						state: {
-							user:  JSON.stringify(data.user)
-						}
-					})
+
+					firebase.database().ref('users/' + data.user.uid  + "/profile").once('value', (snap) => {
+						let currentUser = snap.val();
+						history.push({
+							pathname: '/chat',
+							state: {
+								user:  JSON.stringify(currentUser),
+								userId: data.user.uid
+							}
+						})
+					});
+
 				}
 			  //If authentication is success, pass to next page
 			  setFormErrors(formErrorsInitState);
@@ -86,7 +92,7 @@ const Login: React.FC<any> = (props) => {
 				<div className="fieldset">
 					<IonItem>
 				      <IonLabel position="floating">Email</IonLabel>
-				      <IonInput name="email" type="email" value={email} onInput={(e) => { setEmail((e.target as HTMLInputElement).value); validateForm(); }}></IonInput>
+				      <IonInput autofocus name="email" type="email" value={email} onInput={(e) => { setEmail((e.target as HTMLInputElement).value); validateForm(); }}></IonInput>
 				    </IonItem>
 				</div>
 				<div className="fieldset">

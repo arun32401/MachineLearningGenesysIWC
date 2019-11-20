@@ -9,6 +9,12 @@ https://ionicframework.com/blog/announcing-ionic-react/
 https://dev.to/ionic/ionic-framework-app-using-react-firebase-hooks-5d7a
 https://news.extly.com/more-news/2022-joomla-developer/developer-news/19242-using-react-hooks-in-ionic-react.html?utm_content=joocialnews
 https://stackoverflow.com/questions/54330735/how-to-link-firebases-authentication-to-realtime-database
+https://javebratt.com/ionic-firebase-tutorial-storage/
+
+https://medium.com/@c_innovative/ionic-firebase-image-upload-example-473d63baf5d
+https://www.joshmorony.com/using-the-capacitor-filesystem-api-to-store-photos/
+https://daveceddia.com/convert-createclass-to-es6-class/
+https://enappd.com/blog/google-login-in-ionic-react-capacitor-apps/122/
 
 
 With angular

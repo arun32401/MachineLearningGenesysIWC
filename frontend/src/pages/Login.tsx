@@ -1,6 +1,8 @@
 import { IonInput, IonItem, IonLabel, IonContent, IonImg, IonPage, IonButton} from '@ionic/react';
 // eslint-disable-next-line
 import React, { useState } from 'react';
+import { withRouter } from 'react-router-dom';
+import { isLoggedIn } from '../App';
 
 import '../styles/utils.css';
 import '../styles/login.css';
@@ -10,18 +12,28 @@ import "firebase/auth";
 
 const logo = { src: 'assets/img/talkup-200.png', alt: 'Logo'};
 
-const Login: React.FC = () => {
+const Login: React.FC<any> = (props) => {
 
 	const [ email, setEmail ] = useState('');
 	const [ password, setPassword ] = useState('');
+	const [ isValid, setIsValid ] = useState(false);
 
 	const formErrorsInitState = {code: '', message: ''};
 
 	const [ formErrors, setFormErrors ] = useState(formErrorsInitState);
 
 	const submit = async () => {
-		if ((email.trim() !== "" || password !== "") && validateEmail(email)) {
+		const { history } = props;
+		if (isValid) {
 			firebase.auth().signInWithEmailAndPassword(email, password).then(data => {
+				if (data.user) {
+					history.push({
+						pathname: '/chat',
+						state: {
+							user:  JSON.stringify(data.user)
+						}
+					})
+				}
 			  //If authentication is success, pass to next page
 			  setFormErrors(formErrorsInitState);
 		  	}).catch((error) => {
@@ -38,8 +50,20 @@ const Login: React.FC = () => {
  	}
 	
 	const validateEmail = (email) => {
+		if (email.trim() === '') {
+			return false;
+		}
+
 	    let regexp = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
 	    return regexp.test(email.toLowerCase());
+	}
+	
+	const validateForm = () => {
+		if (validateEmail(email) && password.trim() !== '') {
+			setIsValid(true);
+		} else {
+			setIsValid(false);
+		}
 	}
 
   return (
@@ -50,6 +74,7 @@ const Login: React.FC = () => {
 				<div className="logo">
 					<IonImg src={logo.src} alt={logo.alt} />
 				</div>
+				<p>{isLoggedIn} Log state</p>
 				<h1>Live Chat</h1>
 			</div>
 			<form className="login-form form" onSubmit={(e) => { e.preventDefault(); submit();}}>
@@ -61,17 +86,17 @@ const Login: React.FC = () => {
 				<div className="fieldset">
 					<IonItem>
 				      <IonLabel position="floating">Email</IonLabel>
-				      <IonInput name="email" type="email" value={email} onInput={(e) => setEmail((e.target as HTMLInputElement).value)}></IonInput>
+				      <IonInput name="email" type="email" value={email} onInput={(e) => { setEmail((e.target as HTMLInputElement).value); validateForm(); }}></IonInput>
 				    </IonItem>
 				</div>
 				<div className="fieldset">
 					<IonItem>
 				      <IonLabel position="floating">Password</IonLabel>
-				      <IonInput name="password" type="password" value={password} onInput={(e) => setPassword((e.target as HTMLInputElement).value)}></IonInput>
+				      <IonInput name="password" type="password" value={password} onInput={(e) => { setPassword((e.target as HTMLInputElement).value); validateForm(); }}></IonInput>
 				    </IonItem>
 				</div>
 				<div className="fieldset">
-					<IonButton expand="block" type="submit">Log in</IonButton>
+					<IonButton disabled={isValid ? false : true} expand="block" type="submit">Log in</IonButton>
 				</div>
 				
 				<div className="fieldset">
@@ -89,4 +114,4 @@ const Login: React.FC = () => {
   );
 };
 
-export default Login;
+export default withRouter(Login);

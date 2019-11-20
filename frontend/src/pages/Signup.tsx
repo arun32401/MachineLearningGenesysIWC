@@ -1,7 +1,9 @@
-import { IonInput, IonItem, IonLabel, IonContent, IonImg, IonPage, IonButton, IonSelect, IonSelectOption, IonThumbnail} from '@ionic/react';
+import { IonInput, IonItem, IonLabel, IonContent, IonImg, IonPage, IonButton, IonThumbnail} from '@ionic/react';
 // eslint-disable-next-line
-import React, { useState } from 'react';
-import { Plugins, CameraResultType } from '@capacitor/core';
+import React, { useState, useContext } from 'react';
+import { Plugins, CameraResultType, CameraSource } from '@capacitor/core';
+
+import { defineCustomElements } from '@ionic/pwa-elements/loader';
 
 import '../styles/utils.css';
 import '../styles/login.css';
@@ -12,20 +14,22 @@ import "firebase/auth";
 
 const logo = { src: 'assets/img/talkup-200.png', alt: 'Logo'};
 
-const Signup: React.FC = () => {
+const IS_AGE_DETECT = true;
+const FACE_DECTECTION_URL = 'https://silly-gecko-75.localtunnel.me/facerecognition';
+
+const Signup: React.FC<any> = (props) => {
 	const { Camera } = Plugins;
 	const [ userName, setUserName ] = useState('');
 	const [ email, setEmail ] = useState('');
-
-	const [photo, setPhoto] = useState();
-
+	const [ isValid, setIsValid ] = useState(false);
+	const [ photo, setPhoto ] = useState();
 	const [ password, setPassword ] = useState('');
 	const [ confirmPassword, setConfirmPassword ] = useState('');
-	
+	const [ ageGroup, setAgeGroup ] = useState('');
+	const [ gender, setGender ] = useState('');
 	const formErrorsInitState = {code: '', message: ''};
-
 	const [ formErrors, setFormErrors ] = useState(formErrorsInitState);
-	
+
 	const validate = () => {
 		if (!validateEmail(email)) {
 			console.log('validate email failed');
@@ -33,6 +37,7 @@ const Signup: React.FC = () => {
 				code: '',
 				message: 'Email is invalid'
 			});
+			setIsValid(false);
 			return false;
 		} else if (!validatePassword(password, confirmPassword)) {
 			console.log('validate password failed');
@@ -40,6 +45,7 @@ const Signup: React.FC = () => {
 				code: '',
 				message: 'Password is invalid'
 			});
+			setIsValid(false);
 			return false;
 		} else if (!validateUserName(userName)) {
 			console.log('validate username failed');
@@ -47,6 +53,7 @@ const Signup: React.FC = () => {
 				code: '',
 				message: 'Username is invalid'
 			});
+			setIsValid(false);
 			return false;
 		} else if (!validatePicture(photo)) {
 			console.log('profile picture validation failed');
@@ -54,8 +61,10 @@ const Signup: React.FC = () => {
 				code: '',
 				message: 'Please provide a profile picture!'
 			});
+			setIsValid(false);
 			return false;
 		} else {
+			setIsValid(true);
 			return true;
 		}
 
@@ -63,20 +72,30 @@ const Signup: React.FC = () => {
 
 	const register = async () => {
 		let auth = firebase.auth();
-		console.log('validate method', validate);
+		const { history } = props;
+		
 		setFormErrors(formErrorsInitState);
+
 		if (validate()) {
 			auth.createUserWithEmailAndPassword(email, password).then((data) => {
 				console.log('createUserWithEmailAndPassword', data);
 				 auth.currentUser.updateProfile({
 					 displayName: userName
 				 }).then(() => {
-					 console.log('auth.currentUser.uid', auth.currentUser.uid, auth.currentUser);
-					 firebase.database().ref('users/' + auth.currentUser.uid + "/profile").set({
+					console.log('auth.currentUser.uid', auth.currentUser.uid, auth.currentUser);
+					firebase.database().ref('users/' + auth.currentUser.uid + "/profile").set({
 						 userName: userName,
 						 email: email,
-						 profilePic: photo
-					 });
+						 profilePic: photo,
+						 ageGroup: (ageGroup && ageGroup !== '') ? ageGroup : null,
+						 gender: (gender && gender !== '') ? gender : null,
+					});
+					history.push({
+						pathname: '/chat',
+						state: {
+							user:  JSON.stringify(auth.currentUser)
+						}
+					})
 				 }).catch((error) => {
 					 setFormErrors(error);
 				 });
@@ -121,11 +140,34 @@ const Signup: React.FC = () => {
 	const takePhoto = async () => {
 		const image = await Camera.getPhoto({
 			quality: 90,
-			allowEditing: true,
-			resultType: CameraResultType.Uri
+			allowEditing: false,
+			resultType: CameraResultType.Uri,
+			source: CameraSource.Camera
 		});
+
+		if (IS_AGE_DETECT) {
+			fetch(FACE_DECTECTION_URL, {
+				method: 'POST',
+				headers: {
+				    Accept: 'application/json',
+				    'Content-Type': 'application/json',
+					'Access-Control-Allow-Origin':'*',
+				},
+				body: JSON.stringify({ 'imageUrl' : image.webPath })
+			}).then((response) => {
+			    console.log('face recognition ---->', response);
+				// if (response) {
+				// 	setAgeGroup(response.age);
+				// 	setGender(response.gender)
+				// }
+			}).catch(error => {
+			    console.log('face recognition ---->', error);
+			});
+		}
 		setPhoto(image.webPath);
 	}
+	
+	defineCustomElements(window);
 
   return (
     <IonPage>
@@ -156,29 +198,29 @@ const Signup: React.FC = () => {
 				<div className="fieldset">
 					<IonItem>
 				      <IonLabel position="floating">Email</IonLabel>
-				      <IonInput name="email" type="email" value={email} required onInput={(e) => setEmail((e.target as HTMLInputElement).value)}></IonInput>
+				      <IonInput name="email" type="email" value={email} required onInput={(e) => { setEmail((e.target as HTMLInputElement).value); validate(); }}></IonInput>
 				    </IonItem>
 				</div>
 				<div className="fieldset">
 					<IonItem>
 				      <IonLabel position="floating">Username</IonLabel>
-				      <IonInput  name="userName" type="text" value={userName} required onInput={(e) => setUserName((e.target as HTMLInputElement).value)}></IonInput>
+				      <IonInput  name="userName" type="text" value={userName} required onInput={(e) => { setUserName((e.target as HTMLInputElement).value) ; validate(); } }></IonInput>
 				    </IonItem>
 				</div>
 				<div className="fieldset">
 					<IonItem>
 				      <IonLabel position="floating">Password</IonLabel>
-				      <IonInput required name="password" type="password" value={password} onInput={(e) => setPassword((e.target as HTMLInputElement).value)}></IonInput>
+				      <IonInput required name="password" type="password" value={password} onInput={(e) => { setPassword((e.target as HTMLInputElement).value); validate(); } }></IonInput>
 				    </IonItem>
 				</div>
 				<div className="fieldset">
 					<IonItem>
 				      <IonLabel position="floating">Confirm Password</IonLabel>
-				      <IonInput required name="password" type="password" value={confirmPassword} onInput={(e) => setConfirmPassword((e.target as HTMLInputElement).value)}></IonInput>
+				      <IonInput required name="password" type="password" value={confirmPassword} onInput={(e) => { setConfirmPassword((e.target as HTMLInputElement).value); validate(); }}></IonInput>
 				    </IonItem>
 				</div>
 				<div className="fieldset">
-					<IonButton expand="block" type="submit">Signup</IonButton>
+					<IonButton disabled={isValid ? false : true} expand="block" type="submit">Signup</IonButton>
 				</div>
 				
 				<div className="fieldset">

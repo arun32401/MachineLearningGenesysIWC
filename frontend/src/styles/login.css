@@ -263,11 +263,3 @@
 .form .btn.btn-link:hover {
 	text-decoration: underline;
 }
-
-.fieldset--message {
-	width: 100%;
-}
-
-.fieldset--message .message-box {
-	flex: 1;
-}

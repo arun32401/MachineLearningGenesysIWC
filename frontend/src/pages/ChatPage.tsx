@@ -1,26 +1,97 @@
-import {IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonInput, IonItem, IonLabel, IonContent, IonImg, IonPage, IonButton, IonIcon, IonTextarea, IonGrid, IonRow, IonCol} from '@ionic/react';
+import {IonHeader, IonToolbar, IonButtons, IonTitle, IonInput, IonItem, IonContent, IonPage, IonButton, IonIcon, IonTextarea, IonGrid, IonRow, IonCol} from '@ionic/react';
 // eslint-disable-next-line
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { send } from 'ionicons/icons';
 
 import '../styles/utils.css';
 import '../styles/login.css';
 import '../styles/chat.css';
 
+import * as firebase from "firebase/app";
+import "firebase/auth";
+
 const logo = { src: 'assets/img/talkup-200.png', alt: 'Logo'};
 
-const Chat: React.FC = () => {
+const INITIAL_STATE = {
+	loggedIn: false,
+	user: null
+};
+
+
+const MessageUI: React.FC<any> = (props) => {
+	const colClassName = (props.type === 'agent') ? '' : 'chat-bubble-offset';
+	const offsetVal = (props.type === 'agent') ? '' : "6";
+	const bubbleClassName = (props.type === 'agent') ? 'chat-bubble--left' : 'chat-bubble--right';
 	
-	const initChat = true;
+	return (
+		<IonRow>
+			<IonCol size="6" className={colClassName} offset= {offsetVal} >
+				<div className="chat-bubble { bubbleClassName }">
+					{(props.message && props.message.trim()) !== '' ? props.message : 'Hello Dude'}
+				</div>
+			</IonCol>
+		</IonRow>
+	)
+}
+
+const Chat: React.FC<any> = (props) => {
+	
+	const MESSAGES_INITIAL_STATE = [
+		{
+			type: 'agent',
+			message: 'Hi Customer'
+		},
+
+		{
+			type: 'customer',
+			message: 'Hi Agent'
+		}
+	]
+
 	const [ message, setMessage ] = useState('');
+	const [ stateObj, setStateObj ] = useState(INITIAL_STATE);
+	const [ messages, setMessages ] = useState(MESSAGES_INITIAL_STATE);
 
 	const submit = async () => {
 		try {
-		  console.log('API hit');
+		  // messageUI('customer', message);
+		  setMessages(oldArray => [...oldArray, {
+			  type: 'customer',
+			  message: message
+		  }]);
 		} catch (e) {
 
 		}
  	}
+
+	async function loadData() {
+		console.log('props------------', props);
+		if (props.location.state) {
+			console.log('firebase current user------------', firebase.auth().currentUser);
+			setStateObj({
+				loggedIn: true,
+				user: {
+					name: props.location.state.user.displayName,
+					email: props.location.state.user.email
+				}
+			});
+		}
+	}
+
+	useEffect(() => {
+		loadData();
+	}, [])
+
+	const signOut = async (e) => {
+		const { history } = props;
+	    await firebase.auth().signOut().then(function(data) {
+		  console.log('data of signout', data)
+		  setStateObj(INITIAL_STATE);
+	  	}).catch((error) => {
+		  console.log('signout error', error);
+		});
+	    history.goBack();
+	}
 
   return (
     <IonPage>
@@ -28,30 +99,19 @@ const Chat: React.FC = () => {
 	        <IonToolbar color="primary">
 				<IonTitle>Live Chat</IonTitle>
 				<IonButtons slot="end">
-					<IonButton className="btn-capitalize" type="button">Signout</IonButton>
+					<IonButton className="btn-capitalize" onClick={(e) => { signOut(e); }} type="button">Signout</IonButton>
 				</IonButtons>
 	        </IonToolbar>
 	   	</IonHeader>
-      <IonContent className="ion-padding">
+      <IonContent>
 	  	<div className="chat-transcript">
-			<div className="chat-transcript-container">
-				<IonGrid>
-					<IonRow>
-						<IonCol size="6">
-							<div className="chat-bubble chat-bubble--left">
-							Hello dude!
-							</div>
-						</IonCol>
-				    </IonRow>
-					<IonRow>
-						<IonCol className="chat-bubble-offset" size="6" offset="6">
-							<div className="chat-bubble chat-bubble--right">
-							Hello dude!
-							</div>
-				        </IonCol>
-				    </IonRow>
-				</IonGrid>
-			</div>
+			<IonGrid className="chat-transcript-container">
+				{
+					messages.map((item, index) => {
+						return <MessageUI key={index} type={item.type} message={item.message}/>
+					})
+				}
+			</IonGrid>
 			<form className="chat-form form" onSubmit={(e) => { e.preventDefault(); submit();}}>
 				<div className="fieldset flexbox flexbox-v-center fieldset--message">
 					<IonItem className="message-box">

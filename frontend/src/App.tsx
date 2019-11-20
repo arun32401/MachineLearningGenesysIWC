@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, createContext, useContext } from 'react';
 import { Redirect, Route } from 'react-router-dom';
 import { IonApp, IonRouterOutlet } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
@@ -29,9 +29,11 @@ import './theme/variables.css';
 import firebase from 'firebase';
 import firebaseConfig from "./config/firebase";
 
-const App: React.FC = () => {
-	firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(firebaseConfig);
 
+export const isLoggedIn = false;
+
+const App: React.FC<any> = (props) =>  {
 	return (
 		<IonApp>
 			<IonReactRouter>
@@ -39,7 +41,10 @@ const App: React.FC = () => {
 					<Route path="/login" component={Login} exact={true} />
 					<Route path="/signup" component={Signup} exact={true} />
 					<Route path="/forgot-password" component={ForgotPassword} exact={true} />
-					<Route path="/chat" component={Chat} exact={true} />
+					<Route path="/chat" exact={true} render={(props) => {
+							return isLoggedIn ? <Chat {...props} /> : <Redirect to="/login" />;
+						}}
+					/>
 					<Route exact path="/" render={() => <Redirect to="/login" />} />
 				</IonRouterOutlet>
 			</IonReactRouter>

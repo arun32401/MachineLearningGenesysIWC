@@ -41,6 +41,14 @@ li {
 	align-items: center;
 }
 
+.flexbox-v-top {
+	-webkit-box-align: flex-start;
+	-moz-box-align: flex-start;
+	-ms-flex-align: flex-start;
+	-webkit-align-items: flex-start;
+	align-items: flex-start;
+}
+
 .row-wrap {
   -webkit-flex-flow: column wrap;
   -moz-flex-flow: column wrap;

@@ -1,4 +1,4 @@
-import {IonHeader, IonToolbar, IonButtons, IonList, IonTitle, IonInput, IonItem, IonContent, IonPage, IonButton, IonIcon, IonTextarea, IonGrid, IonRow, IonCol} from '@ionic/react';
+import {IonHeader, IonToolbar, IonButtons, IonList, IonTitle, IonInput, IonItem, IonImg, IonContent, IonPage, IonButton, IonIcon, IonTextarea, IonGrid, IonRow, IonCol} from '@ionic/react';
 // eslint-disable-next-line
 import React, { useState, useEffect } from 'react';
 import { send, person } from 'ionicons/icons';
@@ -13,28 +13,36 @@ import * as firebase from "firebase/app";
 import "firebase/auth";
 import "firebase/database";
 
-const logo = { src: 'assets/img/talkup-200.png', alt: 'Logo'};
-
 const INITIAL_STATE_OBJ = {
 	loggedIn: false,
 	user: null
 };
 
+const AGE_GROUP_CHECK = 25;
+
+const avatar = { src: 'assets/img/avatar-trans.png', alt: 'Person'};
+const bot = { src: 'assets/img/robot.png', alt: 'Bot'};
+
 const MessageUI: React.FC<any> = (props) => {
 	const colClassName = (props.type === 'agent') ? '' : 'chat-bubble-offset';
 	const offsetVal = (props.type === 'agent') ? '' : "6";
 	const bubbleClassName = (props.type === 'agent') ? `chat-bubble--left chat-bubble-key-${props.keyId}` : `chat-bubble--right chat-bubble-key-${props.keyId}`;
+	const imageSrc = (props.type === 'agent') ? bot : ((props.user && props.user.profilePic) ?  { src: props.user.profilePic, alt: 'Person' } : avatar);
+
 
 	return (
-		<IonItem lines="none">
-			<IonRow className="chat-bubble-row">
-				<IonCol size="6" className={colClassName} offset={offsetVal}>
+		<IonRow className="chat-bubble-row">
+			<IonCol size="6" className={colClassName} offset={offsetVal}>
+				<div className="flexbox flexbox-v-top">
+					<div className={`chat-avatar chat-avatar--${props.type}`}>
+						<IonImg src={imageSrc.src} alt={imageSrc.alt} className="chat-avatar-img" />
+					</div>
 					<div className={`chat-bubble ${bubbleClassName}`}>
 						{(props.message && props.message.trim()) !== '' ? props.message : 'Hello Dude'}
 					</div>
-				</IonCol>
-			</IonRow>
-		</IonItem>
+				</div>
+			</IonCol>
+		</IonRow>
 	)
 }
 
@@ -147,15 +155,19 @@ const Chat: React.FC<any> = (props) => {
 		if (IS_BOT_ACTIVATE && stateObj.user) {
 			generateMessage('agent', `Hi ${stateObj.user.userName}`);
 
-			if (detectAgeGroup(stateObj.user.ageGroup) > 25) {
-				generateMessage('agent', 'We found that you might be need our accessibility feature based on your age group. Would you like to enable it?');
+			if (stateObj.user.ageGroup && detectAgeGroup(stateObj.user.ageGroup)) {
+				generateMessage('agent', 'We have predicted that you might need our accessibility feature based on your age group. Would you like to enable it? Please say "Yes" if you would like to');
 			}
 		}
 	};
 
 	const detectAgeGroup = (ageGroup) => {
-		let [minAge, maxAge] = ageGroup.split("-");
-		return parseInt(maxAge);
+		if (ageGroup.indexOf("-") !== -1) {
+			let [minAge, maxAge] = ageGroup.split("-");
+			return (parseInt(maxAge) > AGE_GROUP_CHECK);
+		} else {
+			return false
+		}
 	}
 
 	const signOut = async (e) => {
@@ -214,7 +226,7 @@ const Chat: React.FC<any> = (props) => {
 				<IonTitle>Live Chat</IonTitle>
 				<IonButtons slot="end">
 					{showAccessibilityBtn ? (
-						<IonButton fill="clear" onClick={e => { toggleAccessibility(); }} type="button">
+						<IonButton fill="clear" title="Accessibility" aria-label="Click to toggle between Accessibility option" onClick={e => { toggleAccessibility(); }} type="button">
 					      <IonIcon slot="icon-only" icon={person} />
 					    </IonButton>
 					) : null }
@@ -224,19 +236,19 @@ const Chat: React.FC<any> = (props) => {
 	   	</IonHeader>
       <IonContent className="chat-page">
 	  	<div className="chat-transcript">
-			<IonList aria-live="polite" className="chat-transcript-container">
+			<IonGrid aria-live="polite" aria-atomic="false" className="chat-transcript-container">
 				{
 					messages.map((item, index) => {
-						return <MessageUI key={index} type={item.type} message={item.message} keyId={index}/>
+						return <MessageUI key={index} type={item.type} message={item.message} keyId={index} user={stateObj.user}/>
 					})
 				}
-			</IonList>
+			</IonGrid>
 			<form className="chat-form form" onSubmit={(e) => { e.preventDefault(); submit();}}>
 				<div className="fieldset flexbox flexbox-v-center fieldset--message">
 					<IonItem className="message-box">
 				      <IonTextarea autofocus value={message} name="message" onInput={(e) => setMessage((e.target as HTMLInputElement).value)} placeholder="Type your message here..."></IonTextarea>
 				    </IonItem>
-					<IonButton fill="clear" type="submit">
+					<IonButton fill="clear" title="Send" aria-label="Send Message" type="submit">
 				      <IonIcon slot="icon-only" icon={send} />
 				    </IonButton>
 				</div>

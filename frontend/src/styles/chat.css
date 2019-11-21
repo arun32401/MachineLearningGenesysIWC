@@ -38,6 +38,10 @@
 	border-radius: 0;
 }
 
+.chat-transcript .chat-form .btn-listening {
+	color: red;
+}
+
 .chat-transcript .chat-bubble {
     padding: 10px;
     background: var(--ion-color-step-550);

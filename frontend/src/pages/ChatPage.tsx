@@ -1,7 +1,8 @@
 import {IonHeader, IonToolbar, IonButtons, IonList, IonTitle, IonInput, IonItem, IonImg, IonContent, IonPage, IonButton, IonIcon, IonTextarea, IonGrid, IonRow, IonCol} from '@ionic/react';
 // eslint-disable-next-line
 import React, { useState, useEffect } from 'react';
-import { send, person } from 'ionicons/icons';
+import { send, person, mic } from 'ionicons/icons';
+import { useSpeechRecognition } from "react-speech-kit";
 // import { authFn } from '../App';
 
 import '../styles/utils.css';
@@ -64,6 +65,12 @@ const Chat: React.FC<any> = (props) => {
 	const [ counterVal, setCounterVal ] = useState(0);
 	const [ accessibility, setAccessibilty ] = useState(false);
 	const [ showAccessibilityBtn, setShowAccessibilityBtn ] = useState(false);
+	const [ isSpeechRecognition, setSpeechRecognition ] = useState(true);
+	const { listen, listening, stop } = useSpeechRecognition({
+	    onResult: result => {
+	      setMessage(result);
+	    }
+  	});
 
 	const submit = async () => {
 		try {
@@ -91,6 +98,7 @@ const Chat: React.FC<any> = (props) => {
 				toggleAccessibility();
 				generateMessage('agent', 'Accessibility Settings are turned on');
 				generateMessage('agent', 'You can navigate to the button at top right corner with user icon to toggle between accessibility settings');
+				generateMessage('agent', 'Also you can speak to input the message by clicking on the below Mic button');
 			default:
 				break;
 		}
@@ -119,9 +127,11 @@ const Chat: React.FC<any> = (props) => {
 		if (accessibility) {
 			setAccessibilty(false);
 			setDarkMode(false);
+			setSpeechRecognition(false);
 		} else {
 			setAccessibilty(true);
 			setDarkMode(true);
+			setSpeechRecognition(true);
 		}
 	}
 	
@@ -129,9 +139,11 @@ const Chat: React.FC<any> = (props) => {
 		if (isSet) {
 			setAccessibilty(true);
 			setDarkMode(true);
+			setSpeechRecognition(true);
 		} else {
 			setAccessibilty(false);
 			setDarkMode(false);
+			setSpeechRecognition(false);
 		}
 	}
 
@@ -246,8 +258,13 @@ const Chat: React.FC<any> = (props) => {
 			<form className="chat-form form" onSubmit={(e) => { e.preventDefault(); submit();}}>
 				<div className="fieldset flexbox flexbox-v-center fieldset--message">
 					<IonItem className="message-box">
-				      <IonTextarea autofocus value={message} name="message" onInput={(e) => setMessage((e.target as HTMLInputElement).value)} placeholder="Type your message here..."></IonTextarea>
+				      <IonTextarea autofocus value={message} name="message" onInput={(e) => setMessage((e.target as HTMLInputElement).value)} onChange={e => setMessage((e.target as HTMLInputElement).value)} placeholder="Type your message here..."></IonTextarea>
 				    </IonItem>
+					{(showAccessibilityBtn && isSpeechRecognition) ? (
+						<IonButton fill="clear" title="Voice input" aria-label="Voice Input" onMouseDown={listen} className={listening ? 'btn-listening' : null} onMouseUp={stop} type="button">
+					      <IonIcon slot="icon-only" icon={mic} />
+					    </IonButton>
+					) : null }
 					<IonButton fill="clear" title="Send" aria-label="Send Message" type="submit">
 				      <IonIcon slot="icon-only" icon={send} />
 				    </IonButton>
